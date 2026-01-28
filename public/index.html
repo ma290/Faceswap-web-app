@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Face Magic</title>
+</head>
+<body>
+
+<h2>Face Magic</h2>
+
+<input type="file" id="src" accept="image/*" />
+<input type="file" id="tgt" accept="image/*" />
+<br><br>
+
+<button id="btn">Swap Face</button>
+<p id="status"></p>
+
+<img id="out" style="max-width:300px;display:none" />
+
+<script type="module">
+import { Client } from "https://cdn.skypack.dev/@gradio/client";
+
+const LIMIT = 5;
+const TODAY = new Date().toISOString().slice(0,10);
+
+// reset daily
+if (localStorage.getItem("date") !== TODAY) {
+  localStorage.setItem("date", TODAY);
+  localStorage.setItem("count", "0");
+}
+
+let count = Number(localStorage.getItem("count")) || 0;
+
+const btn = document.getElementById("btn");
+const status = document.getElementById("status");
+const out = document.getElementById("out");
+
+function updateUI() {
+  status.innerText = `Remaining today: ${Math.max(0, LIMIT - count)}`;
+  if (count >= LIMIT) btn.disabled = true;
+}
+updateUI();
+
+btn.onclick = async () => {
+  if (count >= LIMIT) return;
+
+  const source = src.files[0];
+  const target = tgt.files[0];
+  if (!source || !target) {
+    alert("Upload both images");
+    return;
+  }
+
+  count++;
+  localStorage.setItem("count", count);
+  updateUI();
+
+  // inform server on 5th call
+  if (count === LIMIT) {
+    fetch("/completed", { method: "POST" });
+  }
+
+  status.innerText = "Face swapping...";
+
+  // ---- FACE SWAP (DIRECT) ----
+  const faceClient = await Client.connect("asyoucansee/malkis");
+  const faceResult = await faceClient.predict("/face_swap", {
+    source_img: source,
+    target_img: target
+  });
+
+  const resultImage = faceResult.data[0];
+
+  // ---- NSFW CHECK ON RESULT ----
+  const nsfwClient = await Client.connect("suko/nsfw");
+  const nsfwResult = await nsfwClient.predict("/predict", {
+    image: resultImage
+  });
+
+  const isBad = nsfwResult.data.predictions.some(
+    p => p.label === "Naked" && p.confidence > 0.6
+  );
+
+  if (isBad) {
+    status.innerText = "Result blocked (NSFW detected)";
+    return;
+  }
+
+  out.src = resultImage;
+  out.style.display = "block";
+  status.innerText = "Done ✅";
+};
+</script>
+
+</body>
+</html>
