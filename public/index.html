@@ -1,96 +1,446 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <title>Face Magic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Face Magic - Pro</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #8a2387;
+      --secondary: #e94057;
+      --accent: #f27121;
+      --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      --card-bg: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --text-color: #ffffff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    @keyframes gradientBG {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .container {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 40px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    h2 {
+      font-weight: 700;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      background: linear-gradient(to right, #ff6a00, #ee0979);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .limit-info {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 30px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 5px 15px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .upload-area {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+      justify-content: space-between;
+    }
+
+    .file-input-wrapper {
+      flex: 1;
+      position: relative;
+      height: 150px;
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .file-input-wrapper:hover {
+      border-color: var(--secondary);
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateY(-5px);
+    }
+
+    .file-input-wrapper input {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .file-input-wrapper span {
+      font-size: 0.9rem;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+
+    .file-input-wrapper i {
+      font-size: 2rem;
+      opacity: 0.7;
+    }
+
+    .preview-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+
+    .file-input-wrapper:hover .preview-img {
+      opacity: 0.3;
+    }
+
+    .btn-swap {
+      width: 100%;
+      padding: 15px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+      background-size: 200%;
+      color: white;
+      cursor: pointer;
+      transition: 0.4s;
+      box-shadow: 0 5px 15px rgba(233, 64, 87, 0.4);
+      text-transform: uppercase;
+    }
+
+    .btn-swap:hover:not(:disabled) {
+      background-position: right;
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(233, 64, 87, 0.6);
+    }
+
+    .btn-swap:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: #555;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 1rem;
+      font-weight: 500;
+      min-height: 24px;
+    }
+
+    .result-container {
+      margin-top: 30px;
+      position: relative;
+      display: none;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .result-container img {
+      max-width: 100%;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Icons placeholder (using emoji for simplicity/no-external dep) */
+    .icon {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Face Magic</h2>
+  <div class="container">
+    <h2>Face Magic</h2>
+    <div class="limit-info" id="limitDisplay">Limits loading...</div>
 
-<input type="file" id="src" accept="image/*" />
-<input type="file" id="tgt" accept="image/*" />
-<br><br>
+    <div class="upload-area">
+      <div class="file-input-wrapper" id="sourceWrapper">
+        <div class="icon">👤</div>
+        <span>Source Face</span>
+        <input type="file" id="src" accept="image/*" />
+      </div>
 
-<button id="btn">Swap Face</button>
-<p id="status"></p>
+      <div class="file-input-wrapper" id="targetWrapper">
+        <div class="icon">🖼️</div>
+        <span>Target Body</span>
+        <input type="file" id="tgt" accept="image/*" />
+      </div>
+    </div>
 
-<img id="out" style="max-width:300px;display:none" />
+    <button id="btn" class="btn-swap">Swap Faces ✨</button>
 
-<script type="module">
-import { Client } from "https://cdn.skypack.dev/@gradio/client";
+    <div class="spinner" id="loader"></div>
+    <p id="status"></p>
 
-const LIMIT = 5;
-const TODAY = new Date().toISOString().slice(0,10);
+    <div class="result-container" id="resultArea">
+      <p style="margin-bottom:10px; opacity:0.8;">Result:</p>
+      <img id="out" alt="Swapped Face" />
+      <br>
+      <a id="downloadLink" href="#" download="facemagic_result.png"
+        style="color:white; text-decoration:underline; font-size:0.9rem; display:block; margin-top:10px;">Download
+        Image</a>
+    </div>
+  </div>
 
-// reset daily
-if (localStorage.getItem("date") !== TODAY) {
-  localStorage.setItem("date", TODAY);
-  localStorage.setItem("count", "0");
-}
+  <script type="module">
+    import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
 
-let count = Number(localStorage.getItem("count")) || 0;
+    const LIMIT = 5;
+    const TODAY = new Date().toISOString().slice(0, 10);
 
-const btn = document.getElementById("btn");
-const status = document.getElementById("status");
-const out = document.getElementById("out");
+    // Local Storage Limits
+    if (localStorage.getItem("date") !== TODAY) {
+      localStorage.setItem("date", TODAY);
+      localStorage.setItem("count", "0");
+    }
 
-function updateUI() {
-  status.innerText = `Remaining today: ${Math.max(0, LIMIT - count)}`;
-  if (count >= LIMIT) btn.disabled = true;
-}
-updateUI();
+    let count = Number(localStorage.getItem("count")) || 0;
 
-btn.onclick = async () => {
-  if (count >= LIMIT) return;
+    const btn = document.getElementById("btn");
+    const status = document.getElementById("status");
+    const out = document.getElementById("out");
+    const loader = document.getElementById("loader");
+    const resultArea = document.getElementById("resultArea");
+    const limitDisplay = document.getElementById("limitDisplay");
+    const downloadLink = document.getElementById("downloadLink");
 
-  const source = src.files[0];
-  const target = tgt.files[0];
-  if (!source || !target) {
-    alert("Upload both images");
-    return;
-  }
+    // File Preview Logic
+    function handleFileSelect(input, wrapperId) {
+      input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const wrapper = document.getElementById(wrapperId);
+            // Remove existing preview if any
+            const existing = wrapper.querySelector('.preview-img');
+            if (existing) existing.remove();
 
-  count++;
-  localStorage.setItem("count", count);
-  updateUI();
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'preview-img';
+            wrapper.appendChild(img);
+          }
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+    handleFileSelect(document.getElementById('src'), 'sourceWrapper');
+    handleFileSelect(document.getElementById('tgt'), 'targetWrapper');
 
-  // inform server on 5th call
-  if (count === LIMIT) {
-    fetch("/completed", { method: "POST" });
-  }
+    function updateUI() {
+      const remaining = Math.max(0, LIMIT - count);
+      limitDisplay.innerText = `✨ Daily Credits Remaining: ${remaining} / ${LIMIT}`;
+      if (count >= LIMIT) {
+        btn.disabled = true;
+        btn.innerText = "Daily Limit Reached 🌙";
+        btn.style.background = "#444";
+      }
+    }
+    updateUI();
 
-  status.innerText = "Face swapping...";
+    btn.onclick = async () => {
+      if (count >= LIMIT) return;
 
-  // ---- FACE SWAP (DIRECT) ----
-  const faceClient = await Client.connect("asyoucansee/malkis");
-  const faceResult = await faceClient.predict("/face_swap", {
-    source_img: source,
-    target_img: target
-  });
+      const sourceFile = document.getElementById("src").files[0];
+      const targetFile = document.getElementById("tgt").files[0];
 
-  const resultImage = faceResult.data[0];
+      if (!sourceFile || !targetFile) {
+        status.innerText = "⚠️ Please upload both images!";
+        status.style.color = "#ff4757";
+        return;
+      }
 
-  // ---- NSFW CHECK ON RESULT ----
-  const nsfwClient = await Client.connect("suko/nsfw");
-  const nsfwResult = await nsfwClient.predict("/predict", {
-    image: resultImage
-  });
+      // Start UI
+      btn.disabled = true;
+      btn.innerText = "Processing...";
+      loader.style.display = "block";
+      status.innerText = "Initializing AI magic...";
+      status.style.color = "#fff";
+      resultArea.style.display = "none";
 
-  const isBad = nsfwResult.data.predictions.some(
-    p => p.label === "Naked" && p.confidence > 0.6
-  );
+      try {
+        // 1. FACE SWAP
+        status.innerText = "Swapping faces... (This may take ~30s)";
+        const swapClient = await Client.connect("asyoucansee/malkis");
 
-  if (isBad) {
-    status.innerText = "Result blocked (NSFW detected)";
-    return;
-  }
+        const swapResult = await swapClient.predict("/face_swap", {
+          source_img: sourceFile,
+          target_img: targetFile
+        });
 
-  out.src = resultImage;
-  out.style.display = "block";
-  status.innerText = "Done ✅";
-};
-</script>
+        // Resolve the result image URL
+        let resultUrl = "";
+        if (swapResult.data && swapResult.data[0]) {
+          if (typeof swapResult.data[0] === 'object' && swapResult.data[0].url) {
+            resultUrl = swapResult.data[0].url;
+          } else {
+            resultUrl = swapResult.data[0];
+          }
+        }
+        if (!resultUrl) throw new Error("Face swap failed to return an image.");
+
+        // 2. NSFW CHECK
+        status.innerText = "Verifying safety...";
+
+        // Fetch the result image strings to blob for the next API
+        const imageResponse = await fetch(resultUrl);
+        const imageBlob = await imageResponse.blob();
+
+        const nsfwClient = await Client.connect("suko/nsfw");
+        const nsfwResult = await nsfwClient.predict("/predict", {
+          image: imageBlob,
+        });
+
+        // Structure: { data: [ { confidences: [ { label: 'Naked', confidence: 0.9 }, ... ] } ] } 
+        // OR the user provided structure: { predictions: [ { label: 'Naked', confidence: ... } ] }
+        // We need to handle the Gradio client output which acts as a wrapper.
+        // Usually result.data is the array of return values. 
+        // The user says "from this code... I got this { predictions: ... }"
+        // So nsfwResult.data[0] might be the object containing "predictions".
+
+        console.log("NSFW Result:", nsfwResult.data);
+
+        let predictions = [];
+        // Trying to adapt to potential return structures
+        if (nsfwResult.data && nsfwResult.data[0] && nsfwResult.data[0].predictions) {
+          predictions = nsfwResult.data[0].predictions;
+        } else if (Array.isArray(nsfwResult.data)) {
+          // Fallback: sometimes it returns the list directly if it's a single return value unpacked
+          predictions = nsfwResult.data;
+        }
+
+        const nakedPred = predictions.find(p => p.label === "Naked");
+        const isUnsafe = nakedPred && nakedPred.confidence > 0.5;
+
+        if (isUnsafe) {
+          throw new Error("NSFW content detected. Image blocked.");
+        }
+
+        // Success Update
+        count++;
+        localStorage.setItem("count", count);
+        updateUI();
+
+        // Server syncing
+        if (count === LIMIT) {
+          fetch("/completed", { method: "POST" }).catch(e => console.log("Server sync failed", e));
+        }
+
+        // Display Result
+        out.src = resultUrl;
+        downloadLink.href = resultUrl;
+        resultArea.style.display = "block";
+        status.innerText = "Done! 🎉";
+
+      } catch (error) {
+        console.error(error);
+        status.innerText = "❌ " + (error.message || "An error occurred");
+        status.style.color = "#ff4757";
+      } finally {
+        loader.style.display = "none";
+        if (count < LIMIT) {
+          btn.disabled = false;
+          btn.innerText = "Swap Faces ✨";
+        }
+      }
+    };
+  </script>
 
 </body>
+
 </html>
