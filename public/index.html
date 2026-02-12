@@ -916,11 +916,7 @@
     </div>
     <p class="subtitle">AI-powered face swap in seconds</p>
 
-    <!-- Credits -->
-    <div class="credits-badge tooltip" id="creditsBadge" data-tooltip="Resets daily at midnight">
-      <span class="credit-dot" id="creditDot"></span>
-      <span id="limitDisplay">Loading…</span>
-    </div>
+
 
     <!-- Upload area -->
     <div class="upload-grid">
@@ -975,16 +971,7 @@
   <script type="module">
     import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
 
-    const LIMIT = 5;
-    const TODAY = new Date().toISOString().slice(0, 10);
 
-    // Local Storage Limits
-    if (localStorage.getItem("date") !== TODAY) {
-      localStorage.setItem("date", TODAY);
-      localStorage.setItem("count", "0");
-    }
-
-    let count = Number(localStorage.getItem("count")) || 0;
     let currentObjectUrl = null;
 
     // DOM refs
@@ -993,9 +980,7 @@
     const out = document.getElementById("out");
     const loader = document.getElementById("loader");
     const resultArea = document.getElementById("resultArea");
-    const limitDisplay = document.getElementById("limitDisplay");
     const downloadLink = document.getElementById("downloadLink");
-    const creditDot = document.getElementById("creditDot");
     const progressWrap = document.getElementById("progressWrap");
     const progressFill = document.getElementById("progressFill");
 
@@ -1055,22 +1040,7 @@
     setupUploadCard('src', 'sourceWrapper');
     setupUploadCard('tgt', 'targetWrapper');
 
-    // ===== UPDATE UI =====
-    function updateUI() {
-      const remaining = Math.max(0, LIMIT - count);
-      limitDisplay.innerText = `${remaining} / ${LIMIT} credits remaining`;
 
-      // Update dot color
-      creditDot.className = 'credit-dot';
-      if (remaining <= 0) {
-        creditDot.classList.add('depleted');
-        btn.disabled = true;
-        btn.innerText = "Daily Limit Reached 🌙";
-      } else if (remaining <= 2) {
-        creditDot.classList.add('warning');
-      }
-    }
-    updateUI();
 
     // ===== SET STATUS =====
     function setStatus(msg, type = '') {
@@ -1120,7 +1090,6 @@
 
     // ===== SWAP BUTTON HANDLER =====
     btn.onclick = async () => {
-      if (count >= LIMIT) return;
 
       const sourceFile = document.getElementById("src").files[0];
       const targetFile = document.getElementById("tgt").files[0];
@@ -1196,14 +1165,6 @@
 
         // ✅ Success
         setProgress(100);
-        count++;
-        localStorage.setItem("count", count);
-        updateUI();
-
-        // Server sync
-        if (count === LIMIT) {
-          fetch("/completed", { method: "POST" }).catch(e => console.log("Server sync failed", e));
-        }
 
         // Display Result
         out.src = resultUrl;
@@ -1235,10 +1196,8 @@
       } finally {
         loader.classList.remove('active');
         hideProgress();
-        if (count < LIMIT) {
-          btn.disabled = false;
-          btn.innerText = "Swap Faces ✨";
-        }
+        btn.disabled = false;
+        btn.innerText = "Swap Faces ✨";
       }
     };
   </script>
