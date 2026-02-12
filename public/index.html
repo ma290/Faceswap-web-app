@@ -4,276 +4,834 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Face Magic - Pro</title>
+  <title>Face Magic – AI Face Swap</title>
+  <meta name="description" content="Face Magic – Swap faces in seconds with cutting-edge AI. Upload two photos and let the magic happen." />
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* ===== CSS VARIABLES ===== */
     :root {
-      --primary: #8a2387;
-      --secondary: #e94057;
-      --accent: #f27121;
-      --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-      --card-bg: rgba(255, 255, 255, 0.1);
-      --glass-border: rgba(255, 255, 255, 0.2);
-      --text-color: #ffffff;
+      --primary: #7c3aed;
+      --primary-glow: rgba(124, 58, 237, 0.35);
+      --secondary: #ec4899;
+      --secondary-glow: rgba(236, 72, 153, 0.3);
+      --accent: #f59e0b;
+      --accent-glow: rgba(245, 158, 11, 0.25);
+      --surface: rgba(255, 255, 255, 0.06);
+      --surface-hover: rgba(255, 255, 255, 0.10);
+      --border: rgba(255, 255, 255, 0.10);
+      --border-hover: rgba(255, 255, 255, 0.22);
+      --text: #f1f5f9;
+      --text-dim: rgba(241, 245, 249, 0.55);
+      --danger: #f43f5e;
+      --success: #22c55e;
+      --radius: 20px;
+      --radius-sm: 14px;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Outfit', sans-serif;
+    /* ===== GLOBAL RESET ===== */
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
     }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      background: var(--bg-gradient);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
-      color: var(--text-color);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0a0a1a;
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow-x: hidden;
-    }
-
-    @keyframes gradientBG {
-      0% {
-        background-position: 0% 50%;
-      }
-
-      50% {
-        background-position: 100% 50%;
-      }
-
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
-    .container {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      padding: 40px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-      text-align: center;
       position: relative;
-      overflow: hidden;
     }
 
-    h2 {
-      font-weight: 700;
-      font-size: 2.5rem;
-      margin-bottom: 20px;
-      background: linear-gradient(to right, #ff6a00, #ee0979);
+    /* ===== ANIMATED BACKGROUND ===== */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.45;
+      will-change: transform;
+    }
+
+    .orb-1 {
+      width: 420px; height: 420px;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+      top: -10%; left: -8%;
+      animation: orbFloat1 18s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+      bottom: -5%; right: -5%;
+      animation: orbFloat2 22s ease-in-out infinite;
+    }
+    .orb-3 {
+      width: 260px; height: 260px;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      top: 50%; left: 55%;
+      animation: orbFloat3 16s ease-in-out infinite;
+    }
+
+    @keyframes orbFloat1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(120px, 80px) scale(1.12); }
+      66% { transform: translate(-40px, 140px) scale(0.92); }
+    }
+    @keyframes orbFloat2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(-100px, -60px) scale(1.08); }
+      66% { transform: translate(60px, -120px) scale(0.95); }
+    }
+    @keyframes orbFloat3 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-80px, 50px) scale(1.15); }
+    }
+
+    /* Grain overlay */
+    .bg-canvas::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* ===== MAIN CONTAINER ===== */
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 92%;
+      max-width: 520px;
+      padding: 44px 36px 36px;
+      background: var(--surface);
+      backdrop-filter: blur(28px) saturate(1.6);
+      -webkit-backdrop-filter: blur(28px) saturate(1.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 24px 80px -12px rgba(0,0,0,0.55),
+        0 0 60px -20px var(--primary-glow);
+      text-align: center;
+
+      /* Entrance animation */
+      animation: containerEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes containerEnter {
+      from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.96);
+        filter: blur(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0px);
+      }
+    }
+
+    /* ===== HEADER ===== */
+    .logo-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      animation: staggerIn 0.7s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 20px var(--primary-glow);
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% { box-shadow: 0 4px 20px var(--primary-glow); transform: scale(1); }
+      50% { box-shadow: 0 4px 30px var(--secondary-glow); transform: scale(1.05); }
+    }
+
+    h1 {
+      font-weight: 800;
+      font-size: 1.85rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #e0e7ff 0%, #c4b5fd 30%, #f0abfc 60%, #fbbf24 100%);
+      background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      text-transform: uppercase;
-      letter-spacing: 2px;
+      background-clip: text;
+      animation: textShimmer 4s linear infinite;
     }
 
-    .limit-info {
-      font-size: 0.9rem;
-      opacity: 0.8;
-      margin-bottom: 30px;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 5px 15px;
-      border-radius: 20px;
-      display: inline-block;
+    @keyframes textShimmer {
+      to { background-position: 200% center; }
     }
 
-    .upload-area {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 30px;
-      justify-content: space-between;
+    .subtitle {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      margin-bottom: 28px;
+      font-weight: 400;
+      animation: staggerIn 0.7s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
-    .file-input-wrapper {
-      flex: 1;
+    /* Credits badge */
+    .credits-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      background: rgba(124, 58, 237, 0.12);
+      border: 1px solid rgba(124, 58, 237, 0.25);
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #c4b5fd;
+      margin-bottom: 28px;
+      animation: staggerIn 0.7s 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+      transition: all 0.3s ease;
+    }
+
+    .credits-badge:hover {
+      background: rgba(124, 58, 237, 0.2);
+      border-color: rgba(124, 58, 237, 0.4);
+      transform: scale(1.03);
+    }
+
+    .credit-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+      animation: dotPulse 2s ease-in-out infinite;
+    }
+
+    .credit-dot.warning {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .credit-dot.depleted {
+      background: var(--danger);
+      box-shadow: 0 0 8px rgba(244, 63, 94, 0.5);
+      animation: none;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    /* ===== UPLOAD AREA ===== */
+    .upload-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 24px;
+      animation: staggerIn 0.7s 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .upload-card {
       position: relative;
-      height: 150px;
-      border: 2px dashed rgba(255, 255, 255, 0.3);
-      border-radius: 15px;
+      height: 170px;
+      border: 2px dashed rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-sm);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
       overflow: hidden;
+      background: rgba(255,255,255,0.02);
     }
 
-    .file-input-wrapper:hover {
-      border-color: var(--secondary);
-      background: rgba(255, 255, 255, 0.05);
-      transform: translateY(-5px);
-    }
-
-    .file-input-wrapper input {
+    .upload-card::before {
+      content: '';
       position: absolute;
-      width: 100%;
-      height: 100%;
+      inset: -2px;
+      border-radius: var(--radius-sm);
+      background: conic-gradient(
+        from 0deg,
+        transparent 0%,
+        var(--primary) 10%,
+        var(--secondary) 20%,
+        transparent 30%
+      );
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      z-index: -1;
+      animation: borderRotate 4s linear infinite;
+    }
+
+    @keyframes borderRotate {
+      to { transform: rotate(360deg); }
+    }
+
+    .upload-card:hover::before {
+      opacity: 1;
+    }
+
+    .upload-card:hover {
+      border-color: transparent;
+      background: var(--surface-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px -8px rgba(124, 58, 237, 0.2);
+    }
+
+    .upload-card.has-image {
+      border-color: rgba(124, 58, 237, 0.4);
+      border-style: solid;
+    }
+
+    .upload-card input[type="file"] {
+      position: absolute;
+      inset: 0;
       opacity: 0;
       cursor: pointer;
-      z-index: 2;
+      z-index: 3;
     }
 
-    .file-input-wrapper span {
-      font-size: 0.9rem;
-      margin-top: 10px;
-      font-weight: 500;
+    .upload-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 10px;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .file-input-wrapper i {
-      font-size: 2rem;
-      opacity: 0.7;
+    .upload-card:hover .upload-icon {
+      background: rgba(124, 58, 237, 0.15);
+      transform: scale(1.1);
+    }
+
+    .upload-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: var(--text);
+      transition: color 0.3s;
+    }
+
+    .upload-hint {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+      transition: color 0.3s;
+    }
+
+    .upload-card:hover .upload-hint {
+      color: rgba(255,255,255,0.5);
     }
 
     .preview-img {
       position: absolute;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
       z-index: 1;
-      opacity: 0.6;
-      transition: opacity 0.3s;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      border-radius: calc(var(--radius-sm) - 2px);
     }
 
-    .file-input-wrapper:hover .preview-img {
+    .preview-img.visible {
+      opacity: 0.55;
+    }
+
+    .upload-card:hover .preview-img.visible {
       opacity: 0.3;
     }
 
+    .upload-card .upload-check {
+      position: absolute;
+      top: 10px; right: 10px;
+      z-index: 4;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 2px 10px rgba(34, 197, 94, 0.4);
+    }
+
+    .upload-card.has-image .upload-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* ===== SWAP BUTTON ===== */
+    .btn-swap-wrap {
+      animation: staggerIn 0.7s 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
     .btn-swap {
+      position: relative;
       width: 100%;
-      padding: 15px;
-      font-size: 1.2rem;
+      padding: 16px 24px;
+      font-size: 1rem;
       font-weight: 700;
+      font-family: inherit;
       border: none;
-      border-radius: 50px;
-      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
-      background-size: 200%;
+      border-radius: 100px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
       color: white;
       cursor: pointer;
-      transition: 0.4s;
-      box-shadow: 0 5px 15px rgba(233, 64, 87, 0.4);
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow:
+        0 4px 20px var(--primary-glow),
+        0 0 0 0 rgba(124, 58, 237, 0);
+      letter-spacing: 0.5px;
       text-transform: uppercase;
     }
 
+    .btn-swap::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 200%; height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255,255,255,0.12) 50%,
+        transparent 100%
+      );
+      animation: btnShimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes btnShimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
     .btn-swap:hover:not(:disabled) {
-      background-position: right;
-      transform: scale(1.02);
-      box-shadow: 0 8px 20px rgba(233, 64, 87, 0.6);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow:
+        0 8px 30px var(--primary-glow),
+        0 0 0 4px rgba(124, 58, 237, 0.15);
+    }
+
+    .btn-swap:active:not(:disabled) {
+      transform: translateY(0) scale(0.99);
     }
 
     .btn-swap:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
-      background: #555;
+      background: rgba(255,255,255,0.1);
+      box-shadow: none;
+    }
+
+    .btn-swap:disabled::before {
+      animation: none;
+    }
+
+    /* ===== PROCESSING STATES ===== */
+    .process-section {
+      margin-top: 24px;
+      min-height: 24px;
+      animation: staggerIn 0.7s 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    /* Fancy loader */
+    .loader-ring {
+      display: none;
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 16px;
+      position: relative;
+    }
+
+    .loader-ring.active {
+      display: block;
+    }
+
+    .loader-ring::before,
+    .loader-ring::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid transparent;
+    }
+
+    .loader-ring::before {
+      border-top-color: var(--primary);
+      border-right-color: var(--secondary);
+      animation: loaderSpin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    }
+
+    .loader-ring::after {
+      inset: 6px;
+      border-bottom-color: var(--accent);
+      border-left-color: var(--primary);
+      animation: loaderSpin 1.8s cubic-bezier(0.5, 0, 0.5, 1) infinite reverse;
+    }
+
+    @keyframes loaderSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Loader glow */
+    .loader-ring .glow {
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+      animation: loaderGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes loaderGlow {
+      0%, 100% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 0.8; transform: scale(1.1); }
     }
 
     #status {
-      margin-top: 20px;
-      font-size: 1rem;
+      font-size: 0.85rem;
       font-weight: 500;
-      min-height: 24px;
+      color: var(--text-dim);
+      min-height: 22px;
+      transition: all 0.3s ease;
     }
 
-    .result-container {
-      margin-top: 30px;
-      position: relative;
+    #status.error {
+      color: var(--danger);
+      animation: shake 0.5s ease-in-out;
+    }
+
+    #status.success {
+      color: var(--success);
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+
+    /* Progress bar */
+    .progress-bar-wrap {
       display: none;
-      animation: fadeIn 0.5s ease-out;
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 100px;
+      overflow: hidden;
+      margin-top: 12px;
     }
 
-    .result-container img {
-      max-width: 100%;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      border: 2px solid rgba(255, 255, 255, 0.1);
+    .progress-bar-wrap.active {
+      display: block;
     }
 
-    @keyframes fadeIn {
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+      background-size: 200%;
+      animation: progressShimmer 2s linear infinite;
+      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes progressShimmer {
+      to { background-position: 200% 0; }
+    }
+
+    /* ===== RESULT AREA ===== */
+    .result-container {
+      margin-top: 28px;
+      display: none;
+      animation: resultReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .result-container.active {
+      display: block;
+    }
+
+    @keyframes resultReveal {
       from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(24px) scale(0.95);
+        filter: blur(8px);
       }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
 
+    .result-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+
+    .result-img-wrap {
+      position: relative;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      box-shadow:
+        0 16px 50px -10px rgba(0,0,0,0.5),
+        0 0 0 1px rgba(255,255,255,0.08);
+    }
+
+    .result-img-wrap img {
+      width: 100%;
+      display: block;
+      border-radius: var(--radius-sm);
+    }
+
+    .result-img-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius-sm);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      pointer-events: none;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 10px 24px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .download-btn:hover {
+      background: rgba(255,255,255,0.14);
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+    /* ===== STAGGER ANIMATION ===== */
+    @keyframes staggerIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+        filter: blur(4px);
+      }
       to {
         opacity: 1;
         transform: translateY(0);
+        filter: blur(0);
       }
     }
 
-    /* Loading Spinner */
-    .spinner {
-      display: none;
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 1s ease-in-out infinite;
-      margin: 20px auto;
+    /* ===== FOOTER ===== */
+    .footer-text {
+      margin-top: 28px;
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      animation: staggerIn 0.7s 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 480px) {
+      .container {
+        padding: 32px 22px 28px;
+        border-radius: 16px;
       }
+      h1 { font-size: 1.5rem; }
+      .upload-card { height: 145px; }
+      .upload-icon { width: 40px; height: 40px; font-size: 18px; }
+      .btn-swap { padding: 14px 20px; font-size: 0.9rem; }
+      .orb-1 { width: 260px; height: 260px; }
+      .orb-2 { width: 200px; height: 200px; }
+      .orb-3 { width: 160px; height: 160px; }
     }
 
-    /* Icons placeholder (using emoji for simplicity/no-external dep) */
-    .icon {
-      font-size: 24px;
-      margin-bottom: 5px;
+    /* ===== DRAG ACTIVE STATE ===== */
+    .upload-card.drag-over {
+      border-color: var(--primary) !important;
+      border-style: solid !important;
+      background: rgba(124, 58, 237, 0.12) !important;
+      transform: translateY(-4px) scale(1.02);
+    }
+
+    /* ===== TOOLTIP ===== */
+    .tooltip {
+      position: relative;
+      cursor: help;
+    }
+
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tooltip:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== CONFETTI BURST ===== */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      animation: confettiFall 2.5s ease-out forwards;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(100vh) rotate(720deg) scale(0.3);
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <div class="container">
-    <h2>Face Magic</h2>
-    <div class="limit-info" id="limitDisplay">Limits loading...</div>
+  <!-- Animated background -->
+  <div class="bg-canvas" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
 
-    <div class="upload-area">
-      <div class="file-input-wrapper" id="sourceWrapper">
-        <div class="icon">👤</div>
-        <span>Source Face</span>
+  <!-- Main card -->
+  <div class="container" id="mainContainer">
+
+    <!-- Header -->
+    <div class="logo-row">
+      <div class="logo-icon" aria-hidden="true">✦</div>
+      <h1>Face Magic</h1>
+    </div>
+    <p class="subtitle">AI-powered face swap in seconds</p>
+
+    <!-- Credits -->
+    <div class="credits-badge tooltip" id="creditsBadge" data-tooltip="Resets daily at midnight">
+      <span class="credit-dot" id="creditDot"></span>
+      <span id="limitDisplay">Loading…</span>
+    </div>
+
+    <!-- Upload area -->
+    <div class="upload-grid">
+      <div class="upload-card" id="sourceWrapper">
+        <div class="upload-icon">👤</div>
+        <span class="upload-label">Source Face</span>
+        <span class="upload-hint">Drag or click</span>
+        <div class="upload-check">✓</div>
         <input type="file" id="src" accept="image/*" />
       </div>
 
-      <div class="file-input-wrapper" id="targetWrapper">
-        <div class="icon">🖼️</div>
-        <span>Target Body</span>
+      <div class="upload-card" id="targetWrapper">
+        <div class="upload-icon">🖼️</div>
+        <span class="upload-label">Target Body</span>
+        <span class="upload-hint">Drag or click</span>
+        <div class="upload-check">✓</div>
         <input type="file" id="tgt" accept="image/*" />
       </div>
     </div>
 
-    <button id="btn" class="btn-swap">Swap Faces ✨</button>
-
-    <div class="spinner" id="loader"></div>
-    <p id="status"></p>
-
-    <div class="result-container" id="resultArea">
-      <p style="margin-bottom:10px; opacity:0.8;">Result:</p>
-      <img id="out" alt="Swapped Face" />
-      <br>
-      <a id="downloadLink" href="#" download="facemagic_result.png"
-        style="color:white; text-decoration:underline; font-size:0.9rem; display:block; margin-top:10px;">Download
-        Image</a>
+    <!-- Action button -->
+    <div class="btn-swap-wrap">
+      <button id="btn" class="btn-swap">Swap Faces ✨</button>
     </div>
+
+    <!-- Processing feedback -->
+    <div class="process-section">
+      <div class="loader-ring" id="loader">
+        <div class="glow"></div>
+      </div>
+      <p id="status"></p>
+      <div class="progress-bar-wrap" id="progressWrap">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div class="result-container" id="resultArea">
+      <p class="result-label">✨ Your Result</p>
+      <div class="result-img-wrap">
+        <img id="out" alt="Face-swapped result" />
+      </div>
+      <a id="downloadLink" href="#" download="facemagic_result.png" class="download-btn">
+        ⬇ Download Image
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <p class="footer-text">Powered by AI · Results may vary</p>
   </div>
 
   <script type="module">
@@ -290,6 +848,7 @@
 
     let count = Number(localStorage.getItem("count")) || 0;
 
+    // DOM refs
     const btn = document.getElementById("btn");
     const status = document.getElementById("status");
     const out = document.getElementById("out");
@@ -297,42 +856,130 @@
     const resultArea = document.getElementById("resultArea");
     const limitDisplay = document.getElementById("limitDisplay");
     const downloadLink = document.getElementById("downloadLink");
+    const creditDot = document.getElementById("creditDot");
+    const progressWrap = document.getElementById("progressWrap");
+    const progressFill = document.getElementById("progressFill");
 
-    // File Preview Logic
-    function handleFileSelect(input, wrapperId) {
-      input.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            const wrapper = document.getElementById(wrapperId);
-            // Remove existing preview if any
-            const existing = wrapper.querySelector('.preview-img');
-            if (existing) existing.remove();
+    // ===== FILE PREVIEW + DRAG & DROP =====
+    function setupUploadCard(inputId, wrapperId) {
+      const input = document.getElementById(inputId);
+      const wrapper = document.getElementById(wrapperId);
 
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.className = 'preview-img';
-            wrapper.appendChild(img);
+      function handleFile(file) {
+        if (!file || !file.type.startsWith('image/')) return;
+
+        // Create a new DataTransfer to set the file on the input
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          let preview = wrapper.querySelector('.preview-img');
+          if (!preview) {
+            preview = document.createElement('img');
+            preview.className = 'preview-img';
+            wrapper.appendChild(preview);
           }
-          reader.readAsDataURL(file);
-        }
+          preview.src = e.target.result;
+          // Trigger reflow then add visible class for animation
+          requestAnimationFrame(() => {
+            preview.classList.add('visible');
+          });
+          wrapper.classList.add('has-image');
+        };
+        reader.readAsDataURL(file);
+      }
+
+      input.addEventListener('change', (e) => {
+        handleFile(e.target.files[0]);
+      });
+
+      // Drag & drop
+      wrapper.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        wrapper.classList.add('drag-over');
+      });
+
+      wrapper.addEventListener('dragleave', () => {
+        wrapper.classList.remove('drag-over');
+      });
+
+      wrapper.addEventListener('drop', (e) => {
+        e.preventDefault();
+        wrapper.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        handleFile(file);
       });
     }
-    handleFileSelect(document.getElementById('src'), 'sourceWrapper');
-    handleFileSelect(document.getElementById('tgt'), 'targetWrapper');
 
+    setupUploadCard('src', 'sourceWrapper');
+    setupUploadCard('tgt', 'targetWrapper');
+
+    // ===== UPDATE UI =====
     function updateUI() {
       const remaining = Math.max(0, LIMIT - count);
-      limitDisplay.innerText = `✨ Daily Credits Remaining: ${remaining} / ${LIMIT}`;
-      if (count >= LIMIT) {
+      limitDisplay.innerText = `${remaining} / ${LIMIT} credits remaining`;
+
+      // Update dot color
+      creditDot.className = 'credit-dot';
+      if (remaining <= 0) {
+        creditDot.classList.add('depleted');
         btn.disabled = true;
         btn.innerText = "Daily Limit Reached 🌙";
-        btn.style.background = "#444";
+      } else if (remaining <= 2) {
+        creditDot.classList.add('warning');
       }
     }
     updateUI();
 
+    // ===== SET STATUS =====
+    function setStatus(msg, type = '') {
+      status.className = type;
+      status.innerText = msg;
+    }
+
+    // ===== PROGRESS BAR =====
+    function setProgress(pct) {
+      progressFill.style.width = pct + '%';
+    }
+
+    function showProgress() {
+      progressWrap.classList.add('active');
+      setProgress(0);
+    }
+
+    function hideProgress() {
+      progressWrap.classList.remove('active');
+      setProgress(0);
+    }
+
+    // ===== CONFETTI BURST =====
+    function launchConfetti() {
+      const container = document.createElement('div');
+      container.className = 'confetti-container';
+      document.body.appendChild(container);
+
+      const colors = ['#7c3aed', '#ec4899', '#f59e0b', '#22c55e', '#3b82f6', '#f43f5e'];
+
+      for (let i = 0; i < 40; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.top = '-5%';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = Math.random() * 0.6 + 's';
+        piece.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+        piece.style.width = (6 + Math.random() * 6) + 'px';
+        piece.style.height = (6 + Math.random() * 6) + 'px';
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        container.appendChild(piece);
+      }
+
+      setTimeout(() => container.remove(), 4000);
+    }
+
+    // ===== SWAP BUTTON HANDLER =====
     btn.onclick = async () => {
       if (count >= LIMIT) return;
 
@@ -340,28 +987,32 @@
       const targetFile = document.getElementById("tgt").files[0];
 
       if (!sourceFile || !targetFile) {
-        status.innerText = "⚠️ Please upload both images!";
-        status.style.color = "#ff4757";
+        setStatus("⚠️ Please upload both images!", "error");
         return;
       }
 
       // Start UI
       btn.disabled = true;
-      btn.innerText = "Processing...";
-      loader.style.display = "block";
-      status.innerText = "Initializing AI magic...";
-      status.style.color = "#fff";
-      resultArea.style.display = "none";
+      btn.innerText = "Processing…";
+      loader.classList.add('active');
+      showProgress();
+      setStatus("Initializing AI magic…");
+      resultArea.classList.remove('active');
+      resultArea.style.display = 'none';
 
       try {
         // 1. FACE SWAP
-        status.innerText = "Swapping faces... (This may take ~30s)";
+        setStatus("Swapping faces… This may take ~30s");
+        setProgress(20);
         const swapClient = await Client.connect("asyoucansee/malkis");
 
+        setProgress(40);
         const swapResult = await swapClient.predict("/face_swap", {
           source_img: sourceFile,
           target_img: targetFile
         });
+
+        setProgress(65);
 
         // Resolve the result image URL
         let resultUrl = "";
@@ -375,9 +1026,9 @@
         if (!resultUrl) throw new Error("Face swap failed to return an image.");
 
         // 2. NSFW CHECK
-        status.innerText = "Verifying safety...";
+        setStatus("Verifying safety…");
+        setProgress(80);
 
-        // Fetch the result image strings to blob for the next API
         const imageResponse = await fetch(resultUrl);
         const imageBlob = await imageResponse.blob();
 
@@ -386,21 +1037,14 @@
           image: imageBlob,
         });
 
-        // Structure: { data: [ { confidences: [ { label: 'Naked', confidence: 0.9 }, ... ] } ] } 
-        // OR the user provided structure: { predictions: [ { label: 'Naked', confidence: ... } ] }
-        // We need to handle the Gradio client output which acts as a wrapper.
-        // Usually result.data is the array of return values. 
-        // The user says "from this code... I got this { predictions: ... }"
-        // So nsfwResult.data[0] might be the object containing "predictions".
+        setProgress(95);
 
         console.log("NSFW Result:", nsfwResult.data);
 
         let predictions = [];
-        // Trying to adapt to potential return structures
         if (nsfwResult.data && nsfwResult.data[0] && nsfwResult.data[0].predictions) {
           predictions = nsfwResult.data[0].predictions;
         } else if (Array.isArray(nsfwResult.data)) {
-          // Fallback: sometimes it returns the list directly if it's a single return value unpacked
           predictions = nsfwResult.data;
         }
 
@@ -411,12 +1055,13 @@
           throw new Error("NSFW content detected. Image blocked.");
         }
 
-        // Success Update
+        // ✅ Success
+        setProgress(100);
         count++;
         localStorage.setItem("count", count);
         updateUI();
 
-        // Server syncing
+        // Server sync
         if (count === LIMIT) {
           fetch("/completed", { method: "POST" }).catch(e => console.log("Server sync failed", e));
         }
@@ -424,15 +1069,20 @@
         // Display Result
         out.src = resultUrl;
         downloadLink.href = resultUrl;
-        resultArea.style.display = "block";
-        status.innerText = "Done! 🎉";
+        resultArea.style.display = 'block';
+        // Trigger animation
+        requestAnimationFrame(() => {
+          resultArea.classList.add('active');
+        });
+        setStatus("Done! 🎉", "success");
+        launchConfetti();
 
       } catch (error) {
         console.error(error);
-        status.innerText = "❌ " + (error.message || "An error occurred");
-        status.style.color = "#ff4757";
+        setStatus("❌ " + (error.message || "An error occurred"), "error");
       } finally {
-        loader.style.display = "none";
+        loader.classList.remove('active');
+        hideProgress();
         if (count < LIMIT) {
           btn.disabled = false;
           btn.innerText = "Swap Faces ✨";
