@@ -752,6 +752,7 @@
       font-size: 0.82rem;
       font-weight: 600;
       font-family: inherit;
+      cursor: pointer;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -962,9 +963,9 @@
       <div class="result-img-wrap">
         <img id="out" alt="Face-swapped result" />
       </div>
-      <a id="downloadLink" href="#" download="facemagic_result.png" class="download-btn">
+      <button id="downloadLink" class="download-btn">
         ⬇ Download Image
-      </a>
+      </button>
     </div>
 
     <!-- Footer -->
@@ -1208,7 +1209,17 @@
         out.src = resultUrl;
         if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
         currentObjectUrl = URL.createObjectURL(imageBlob);
-        downloadLink.href = currentObjectUrl;
+
+        // Set up download button click handler
+        downloadLink.onclick = (e) => {
+          e.preventDefault();
+          const a = document.createElement('a');
+          a.href = currentObjectUrl;
+          a.download = 'facemagic_result.webp';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        };
 
         resultArea.style.display = 'block';
         // Trigger animation
